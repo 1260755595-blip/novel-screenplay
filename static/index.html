@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172033">
+  <title>镜界 · 小说漫剧工作台</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css?v=20261018-edit-input">
+</head>
+<body>
+  <div id="auth-screen" class="auth-screen hidden">
+    <section class="auth-story">
+      <div class="brand brand-light">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span>镜界</span>
+      </div>
+      <div class="auth-copy">
+        <span class="eyebrow light">NOVEL TO SCREEN</span>
+        <h1>把长篇故事，<br>变成可拍的每一集。</h1>
+        <p>规则、分批、质检都已经在后台排好。员工只需要上传小说，剩下的交给工作流。</p>
+      </div>
+      <div class="auth-process">
+        <div><b>01</b><span>自动切章</span></div>
+        <i></i>
+        <div><b>02</b><span>分批拆解</span></div>
+        <i></i>
+        <div><b>03</b><span>逐集成稿</span></div>
+      </div>
+    </section>
+    <section class="auth-panel">
+      <div class="auth-box">
+        <span class="mobile-brand">镜界 · 漫剧工作台</span>
+        <div id="login-copy">
+          <span class="eyebrow">EMPLOYEE ACCESS</span>
+          <h2>欢迎回来</h2>
+          <p>使用管理员分配的账号进入工作台。</p>
+        </div>
+        <div id="setup-copy" class="hidden">
+          <span class="eyebrow">FIRST SETUP</span>
+          <h2>创建管理员</h2>
+          <p>这是第一次打开系统，请设置首个管理员账号。</p>
+        </div>
+        <form id="auth-form">
+          <label>账号<input name="username" autocomplete="username" placeholder="请输入账号" required></label>
+          <label id="display-name-field" class="hidden">姓名<input name="display_name" placeholder="例如：内容组管理员"></label>
+          <label>密码<input name="password" type="password" autocomplete="current-password" placeholder="至少 8 位" required></label>
+          <button class="primary wide" type="submit"><span id="auth-submit-label">进入工作台</span><span aria-hidden="true">→</span></button>
+        </form>
+        <div id="auth-error" class="form-error hidden"></div>
+        <p class="auth-foot">仅限已授权员工使用 · 所有模型密钥均保存在服务端</p>
+      </div>
+    </section>
+  </div>
+
+  <div id="app-shell" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span>镜界</span>
+      </div>
+      <nav>
+        <button class="nav-item active" data-view="home">
+          <svg viewBox="0 0 24 24"><path d="M4 4h6v7H4zM14 4h6v4h-6zM14 12h6v8h-6zM4 15h6v5H4z"/></svg>
+          项目总览
+        </button>
+        <button class="nav-item" data-view="projects">
+          <svg viewBox="0 0 24 24"><path d="M4 6.5h6l2 2h8v10H4z"/></svg>
+          我的项目
+        </button>
+        <button id="admin-nav" class="nav-item hidden" data-view="users">
+          <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8c.6-4 2.9-6 7-6s6.4 2 7 6"/></svg>
+          账号管理
+        </button>
+        <button id="tasks-nav" class="nav-item hidden" data-view="tasks">
+          <svg viewBox="0 0 24 24"><path d="M5 5h14v14H5zM8 15l2-3 2 2 4-5"/></svg>
+          任务监控
+        </button>
+        <button id="audit-nav" class="nav-item hidden" data-view="audit">
+          <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>
+          操作日志
+        </button>
+        <button id="generation-schemes-nav" class="nav-item hidden" data-view="generation-schemes">
+          <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>
+          生成方案
+        </button>
+        <button id="settings-nav" class="nav-item hidden" data-view="settings">
+          <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-5v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/></svg>
+          系统设置
+        </button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="quota-mini">
+          <div><span>本月任务</span><b id="quota-text">—</b></div>
+          <div class="mini-track"><i id="quota-bar"></i></div>
+        </div>
+        <div id="profile-menu-wrap" class="profile-menu-wrap">
+          <div id="profile-menu" class="profile-menu hidden" role="menu" aria-label="账号菜单">
+            <button type="button" role="menuitem" data-account-action="password">
+              <span class="profile-menu-icon">密</span>
+              <span><b>修改密码</b><small>更新当前账号的登录密码</small></span>
+            </button>
+            <button type="button" role="menuitem" data-account-action="switch">
+              <span class="profile-menu-icon">换</span>
+              <span><b>切换账号</b><small>返回登录页使用其他账号</small></span>
+            </button>
+            <div class="profile-menu-divider"></div>
+            <button type="button" class="profile-menu-danger" role="menuitem" data-account-action="logout">
+              <span class="profile-menu-icon">退</span>
+              <span><b>退出登录</b><small>退出当前账号</small></span>
+            </button>
+          </div>
+          <button id="profile-button" class="profile-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
+            <span id="avatar">镜</span>
+            <span><b id="profile-name">—</b><small id="profile-role">—</small></span>
+            <svg class="profile-arrow" viewBox="0 0 24 24"><path d="M9 6 15 12 9 18"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="mobile-menu" class="icon-button mobile-only" aria-label="菜单">☰</button>
+        <div>
+          <span id="page-kicker" class="page-kicker">WORKSPACE</span>
+          <h2 id="page-title">项目总览</h2>
+        </div>
+        <div class="top-actions">
+          <span id="model-status" class="model-status"><i></i><span>模型检测中</span></span>
+          <button id="new-project-top" class="primary"><span>＋</span> 新建改编</button>
+        </div>
+      </header>
+
+      <div id="home-view" class="view">
+        <section class="hero-card">
+          <div>
+            <span class="eyebrow light">ONE CLICK WORKFLOW</span>
+            <h1>今天，想把哪部小说<br>搬上屏幕？</h1>
+            <p id="hero-workflow-copy">上传完整小说，系统会自动切章、每 <span id="hero-batch-size">6</span> 章分批拆解、逐集创作并完成双重质检。</p>
+            <button id="hero-new-project" class="primary light-button">上传小说开始 <span>→</span></button>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <div class="script-sheet sheet-back">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="script-sheet sheet-front">
+              <small>EPISODE</small><b>01</b>
+              <i></i>
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="play-seal">▶</div>
+          </div>
+        </section>
+
+        <section class="section-head">
+          <div><span class="eyebrow">RECENT PROJECTS</span><h3>最近的改编</h3></div>
+          <button class="text-button" data-view-target="projects">查看全部 →</button>
+        </section>
+        <div id="recent-projects" class="project-grid"></div>
+        <div id="recent-empty" class="empty-state hidden">
+          <div>稿</div><h3>还没有项目</h3><p>上传第一部小说，工作流会在后台自动完成全部步骤。</p>
+        </div>
+
+        <section class="flow-strip">
+          <div class="flow-title"><span class="eyebrow">BUILT-IN QUALITY</span><h3>规则已经替你守在每一步</h3></div>
+          <div class="flow-step"><b>01</b><span><strong>识别与切章</strong><small>TXT / DOCX 自动解析</small></span></div>
+          <i></i>
+          <div id="flow-step-two" class="flow-step"><b>02</b><span><strong><span id="flow-batch-size">6</span> 章分批拆解</strong><small>情节弧线与搁置合并</small></span></div>
+          <i></i>
+          <div id="flow-step-three" class="flow-step"><b>03</b><span><strong>逐集双重质检</strong><small>失败自动返修再检查</small></span></div>
+        </section>
+      </div>
+
+      <div id="projects-view" class="view hidden">
+        <section class="toolbar project-toolbar">
+          <div class="search-box"><span>⌕</span><input id="project-search" placeholder="搜索小说名称"></div>
+          <div class="filter-group">
+            <select id="project-type-filter" class="select-filter" aria-label="按小说类型筛选"><option value="">全部类型</option></select>
+            <select id="project-status-filter" class="select-filter" aria-label="按处理状态筛选">
+              <option value="">全部状态</option>
+              <option value="ready">待开始</option>
+              <option value="queued">排队中</option>
+              <option value="running">工作中</option>
+              <option value="completed">已完成</option>
+              <option value="failed">需处理</option>
+              <option value="paused">已暂停</option>
+            </select>
+          </div>
+        </section>
+        <div id="project-list-head" class="project-list-head">
+          <span></span><span>小说名称</span><span>小说类型</span><span>处理规模</span><span>状态</span><span></span>
+        </div>
+        <div id="all-projects" class="project-list"></div>
+        <div id="projects-empty" class="empty-state hidden">
+          <div>稿</div><h3>还没有项目</h3><p>支持上传 TXT、Markdown 或 DOCX 完整小说。</p>
+        </div>
+        <div id="project-pagination" class="pagination hidden" aria-label="项目列表分页"></div>
+      </div>
+
+      <div id="detail-view" class="view hidden">
+        <button id="back-projects" class="back-button">← 返回项目</button>
+        <div id="project-detail"></div>
+      </div>
+
+      <div id="users-view" class="view hidden">
+        <section class="admin-intro">
+          <div><span class="eyebrow">ACCESS CONTROL</span><h3>员工账号与使用额度</h3><p>只有这里创建并启用的账号才能访问项目。</p></div>
+          <button id="new-user-button" class="primary">＋ 创建员工账号</button>
+        </section>
+        <div class="table-shell">
+          <table>
+            <thead><tr><th>员工</th><th>角色</th><th>本月任务</th><th>项目上限</th><th>并发上限</th><th>章节上限</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="users-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tasks-view" class="view hidden">
+        <section class="admin-intro">
+          <div><span class="eyebrow">TASK MONITOR</span><h3>所有员工任务</h3><p>集中查看运行状态、批次进度、审核通过剧集与异常任务。</p></div>
+          <button id="refresh-tasks" class="secondary">刷新状态</button>
+        </section>
+        <div class="task-summary" id="task-summary"></div>
+        <section class="task-filters">
+          <select id="task-status-filter" class="select-filter" aria-label="按任务状态筛选">
+            <option value="">全部状态</option>
+            <option value="active">正在运行</option>
+            <option value="failed">需要处理</option>
+            <option value="paused">已暂停</option>
+            <option value="completed">已经完成</option>
+          </select>
+          <select id="task-user-filter" class="select-filter" aria-label="按员工筛选"><option value="">全部员工</option></select>
+        </section>
+        <div class="table-shell">
+          <table>
+            <thead><tr><th>项目</th><th>员工</th><th>当前阶段</th><th>批次</th><th>剧集</th><th>进度</th><th>状态</th></tr></thead>
+            <tbody id="tasks-table"></tbody>
+          </table>
+        </div>
+        <div id="task-pagination" class="pagination hidden" aria-label="任务列表分页"></div>
+      </div>
+
+      <div id="audit-view" class="view hidden">
+        <section class="admin-intro">
+          <div><span class="eyebrow">AUDIT LOG</span><h3>管理员操作日志</h3><p>记录账号、设置和项目删除等关键操作。</p></div>
+          <button id="refresh-audit" class="secondary">刷新日志</button>
+        </section>
+        <div class="table-shell">
+          <table>
+            <thead><tr><th>时间</th><th>操作者</th><th>动作</th><th>对象</th><th>说明</th></tr></thead>
+            <tbody id="audit-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="settings-view" class="view hidden">
+        <section class="admin-intro">
+          <div><span class="eyebrow">WORKFLOW CONTROL</span><h3>模型与生成输入设置</h3><p id="settings-intro-copy">整部小说一次提交给 AI；系统提示词和默认项目上下文可在这里修改。</p></div>
+        </section>
+        <form id="settings-form" class="settings-layout">
+          <section class="panel settings-card">
+            <div class="panel-title"><h3>AI 模型</h3><small id="key-status">读取中</small></div>
+            <div class="form-grid">
+              <label>接口类型
+                <select name="ai_provider">
+                  <option value="anthropic">Anthropic</option>
+                  <option value="openai_compatible">OpenAI 兼容接口</option>
+                  <option value="claude_code_deepseek">Claude Code 会话模式（DeepSeek 试验）</option>
+                </select>
+              </label>
+              <label>模型名称<input name="ai_model" placeholder="填写服务商提供的模型名"></label>
+            </div>
+            <label>接口地址<input name="ai_base_url" placeholder="留空使用对应官方地址"></label>
+            <label>API Key<div class="api-key-row"><input name="ai_api_key" type="password" autocomplete="new-password" placeholder="请输入 API Key"><button type="button" id="test-api-key" class="secondary">测试连接</button></div></label>
+            <p id="key-test-result" class="form-hint" style="display:none"></p>
+            <p class="setting-hint">新密钥会加密后保存；网页不会显示已有密钥。Claude Code 试验模式会为每批拆解、每集创作和独立审核分别保留可续接会话；模型切换对新启动或续跑的任务生效。</p>
+          </section>
+
+          <section class="panel settings-card">
+            <div class="panel-title"><h3>AI 技术故障重试</h3><small id="retry-settings-status">读取中</small></div>
+            <div class="form-grid">
+              <label>上游 API 自动重试次数
+                <input name="upstream_api_retries" type="number" min="0" max="10" value="1">
+              </label>
+              <label>回合上限自动续跑次数
+                <input name="turn_limit_resumes" type="number" min="0" max="10" value="1">
+              </label>
+            </div>
+            <p class="setting-hint">次数均不包含首次调用；当前默认均为 1，即首次失败后再自动尝试 1 次。仅处理可重试的接口错误或回合上限，不会忽略文件损坏、权限错误或业务校验失败。保存后只对新启动或人工续跑的任务生效。</p>
+          </section>
+
+          <section id="one-shot-settings-card" class="panel settings-card hidden">
+            <div class="panel-title"><h3>整部小说同一会话生成</h3><small>新项目默认输入</small></div>
+            <p class="setting-hint">这里保存的是以后新建项目的默认值。每个项目创建时会冻结一份，项目负责人可在开始生成前单独修改；修改默认值不会改变已有项目。</p>
+            <label>整书生成系统提示词
+              <textarea name="one_shot_system_prompt" placeholder="留空保存时将恢复系统内置的完整生成规则"></textarea>
+            </label>
+            <label>默认项目上下文
+              <textarea name="one_shot_default_context" placeholder="例如：面向竖屏漫剧；保留原作结局；人物称谓采用原文。可留空。"></textarea>
+            </label>
+            <details class="rule-default">
+              <summary>系统内置完整生成规则（点击查看）</summary>
+              <pre id="one-shot-builtin-prompt" class="rule-view">加载中…</pre>
+            </details>
+          </section>
+
+          <section class="panel settings-card legacy-workflow-settings">
+            <div class="panel-title"><h3>自动分批</h3><small>默认 6 章</small></div>
+            <label>每批处理章节数<input name="batch_size" type="number" min="1" max="20" value="6"></label>
+            <p class="setting-hint">新建项目会记录当前批次设置。平台默认值为 6；调整后其他情节弧线、搁置与审核规则保持不变。</p>
+          </section>
+
+          <section class="panel settings-card quality-card legacy-workflow-settings">
+            <div class="panel-title"><h3>数值质量检查</h3><small id="quality-save-status">读取中</small></div>
+            <p class="setting-hint">下方数值属于当前选择的工作流版本，不是全站共用设置。复制版本时一并复制；新建项目会冻结完整快照，其他用户、其他版本和后续修改都不会影响已有项目。稳定版与历史版只读，试验版可编辑。</p>
+            <details class="rule-core">
+              <summary>单次验收的三组合同（点击查看）</summary>
+              <p class="setting-hint">①本集允许使用的剧情点和事件槽；②标题、场景、字数、台词、占比与输出格式；③原著人物、地点、时间、触发、因果和结果边界。JSON 字段只是接口格式，不算额外质量规则。</p>
+              <p class="setting-hint">DeepSeek 在同一次思考中检查原著忠实、人物、因果、节奏和可拍性；程序只负责必要计数、编号和格式。全部通过后直接完成，不再调用第二个 AI 复审。</p>
+            </details>
+            <div class="quality-rule-groups">
+              <fieldset>
+                <legend>分集与结构</legend>
+                <div class="quality-rule-grid">
+                  <label>每 6 章最少集数<input name="quality_episodes_per_6_min" type="number" min="1" max="30"></label>
+                  <label>每 6 章普通最多集数<input name="quality_episodes_per_6_max" type="number" min="1" max="30"></label>
+                  <label>10分高潮例外最多集数<input name="quality_episodes_per_6_high_density_max" type="number" min="1" max="30"></label>
+                  <label>每集最少剧情点<input name="quality_plot_points_min" type="number" min="1" max="10"></label>
+                  <label>每集最多剧情点<input name="quality_plot_points_max" type="number" min="1" max="10"></label>
+                  <label>每集最少场景<input name="quality_scene_min" type="number" min="1" max="10"></label>
+                  <label>每集最多场景<input name="quality_scene_max" type="number" min="1" max="10"></label>
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend>篇幅与台词</legend>
+                <div class="quality-rule-grid">
+                  <label>每集最少汉字<input name="quality_script_han_min" type="number" min="100" max="5000"></label>
+                  <label>每集最多汉字<input name="quality_script_han_max" type="number" min="100" max="5000"></label>
+                  <label>有效台词最少句数<input name="quality_dialogue_lines_min" type="number" min="1" max="30"></label>
+                  <label>台词最多连续句数<input name="quality_dialogue_run_max" type="number" min="1" max="20"></label>
+                  <label>连续▲动作最多处数<input name="quality_adjacent_action_max" type="number" min="0" max="50"></label>
+                  <label>同角色未合并台词最多处数<input name="quality_same_speaker_unmerged_max" type="number" min="0" max="50"></label>
+                  <label>单句台词最多汉字<input name="quality_single_dialogue_han_max" type="number" min="20" max="1000"></label>
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend>三类正文占比（%）</legend>
+                <div class="quality-rule-grid ratio-grid">
+                  <label>对话下限<input name="quality_dialogue_ratio_min" type="number" min="0" max="100"></label>
+                  <label>对话上限<input name="quality_dialogue_ratio_max" type="number" min="0" max="100"></label>
+                  <label>动作下限<input name="quality_action_ratio_min" type="number" min="0" max="100"></label>
+                  <label>动作上限<input name="quality_action_ratio_max" type="number" min="0" max="100"></label>
+                  <label>心理/旁白下限<input name="quality_narration_ratio_min" type="number" min="0" max="100"></label>
+                  <label>心理/旁白上限<input name="quality_narration_ratio_max" type="number" min="0" max="100"></label>
+                </div>
+              </fieldset>
+            </div>
+            <p class="setting-hint">所有可计数内容标准都从当前版本合同读取，并与 AI 使用同一份项目快照。标题、文件编号、场景头、▲和【卡黑】属于平台解析/导出协议。</p>
+          </section>
+
+          <section class="panel settings-card prompt-card legacy-workflow-settings">
+            <div class="panel-title"><h3>工作流版本与各步骤提示词</h3><small>生产只使用精简三组合同</small></div>
+            <div class="workflow-version-control">
+              <label>当前查看版本<select id="workflow-version-select"></select></label>
+              <span id="workflow-version-status" class="status-chip ready">读取中</span>
+              <div class="workflow-version-actions">
+                <button id="clone-workflow-version" class="secondary" type="button">复制为试验版</button>
+                <button id="new-default-workflow-version" class="secondary" type="button">新建系统默认版</button>
+                <button id="restore-workflow-version" class="secondary" type="button">恢复内置规则与数值</button>
+                <button id="delete-workflow-version" class="danger-button" type="button">删除当前版本</button>
+                <button id="publish-workflow-version" class="primary" type="button">发布为员工稳定版</button>
+              </div>
+              <p id="workflow-version-help" class="setting-hint">员工固定使用稳定版；试验版只供管理员和管理层测试，发布后仅影响新建项目。</p>
+            </div>
+            <details class="rule-core">
+              <summary>当前生产总规则（点击展开）</summary>
+              <pre id="core-rule-view" class="rule-view">加载中…</pre>
+            </details>
+            <div class="prompt-tabs">
+              <button type="button" class="active" data-prompt-tab="metadata">类型识别</button>
+              <button type="button" data-prompt-tab="breakdown">剧情拆解/分集</button>
+              <button type="button" data-prompt-tab="breakdown_review">拆解复审（停用）</button>
+              <button type="button" data-prompt-tab="script">剧本创作</button>
+              <button type="button" data-prompt-tab="script_review">剧本复审（停用）</button>
+            </div>
+            <div id="prompt-editors">
+              <div data-prompt-editor="metadata">
+                <details class="rule-default">
+                  <summary>内置默认规则（当前生效 · 点击展开）</summary>
+                  <pre class="rule-view" data-default-view="metadata"></pre>
+                </details>
+                <label class="override-toggle"><input type="checkbox" name="mode_metadata"><span>覆盖可编辑步骤规则：勾选后下方内容将<b>替换</b>该步骤规则（核心与程序硬要求仍保留）</span></label>
+                <label class="editor-label"><span data-editor-label="metadata">附加提示词（叠加在默认规则之上）</span><textarea name="prompt_metadata" placeholder="例如：本公司统一将双男主题材标记为都市/悬疑……"></textarea></label>
+              </div>
+              <div class="hidden" data-prompt-editor="breakdown">
+                <details class="rule-default">
+                  <summary>内置默认规则（当前生效 · 点击展开）</summary>
+                  <pre class="rule-view" data-default-view="breakdown"></pre>
+                </details>
+                <label class="override-toggle"><input type="checkbox" name="mode_breakdown"><span>覆盖可编辑步骤规则：完整 cursor (2) 方法论、模板、范例、核心与程序硬要求<b>始终保留</b></span></label>
+                <label class="editor-label"><span data-editor-label="breakdown">附加提示词（叠加在默认规则之上）</span><textarea name="prompt_breakdown" placeholder="在平台内置拆解与分集规则之上补充要求"></textarea></label>
+              </div>
+              <div class="hidden" data-prompt-editor="breakdown_review">
+                <details class="rule-default">
+                  <summary>内置默认规则（当前生效 · 点击展开）</summary>
+                  <pre class="rule-view" data-default-view="breakdown_review"></pre>
+                </details>
+                <label class="override-toggle"><input type="checkbox" name="mode_breakdown_review"><span>覆盖可编辑步骤规则：完整 cursor (2) 审核矩阵、方法论、核心与程序硬要求<b>始终保留</b></span></label>
+                <label class="editor-label"><span data-editor-label="breakdown_review">附加审核标准（叠加在默认规则之上）</span><textarea name="prompt_breakdown_review" placeholder="补充剧情拆解审核必须检查的项目"></textarea></label>
+              </div>
+              <div class="hidden" data-prompt-editor="script">
+                <details class="rule-default">
+                  <summary>内置默认规则（当前生效 · 点击展开）</summary>
+                  <pre class="rule-view" data-default-view="script"></pre>
+                </details>
+                <label class="override-toggle"><input type="checkbox" name="mode_script"><span>覆盖可编辑步骤规则：完整 cursor (2) 方法论、风格、模板、范例与程序硬要求<b>始终保留</b></span></label>
+                <label class="editor-label"><span data-editor-label="script">附加创作规则（叠加在默认规则之上）</span><textarea name="prompt_script" placeholder="补充单集剧本的统一创作要求"></textarea></label>
+              </div>
+              <div class="hidden" data-prompt-editor="script_review">
+                <details class="rule-default">
+                  <summary>内置默认规则（当前生效 · 点击展开）</summary>
+                  <pre class="rule-view" data-default-view="script_review"></pre>
+                </details>
+                <label class="override-toggle"><input type="checkbox" name="mode_script_review"><span>覆盖可编辑步骤规则：完整 cursor (2) 11 维审核矩阵、方法论与程序硬要求<b>始终保留</b></span></label>
+                <label class="editor-label"><span data-editor-label="script_review">附加审核标准（叠加在默认规则之上）</span><textarea name="prompt_script_review" placeholder="补充单集剧本审核必须检查的项目"></textarea></label>
+              </div>
+            </div>
+            <p class="setting-hint">生产单次验收不会拼接旧版长规则或历史扩展；试验版里已有的长文本仅保留作历史记录，不进入当前生产调用。</p>
+            <div id="settings-error" class="form-error hidden"></div>
+            <div class="settings-actions"><button id="save-settings" class="primary" type="submit">确定</button></div>
+          </section>
+        </form>
+      </div>
+
+      <div id="generation-schemes-view" class="view hidden">
+        <section class="admin-intro">
+          <div><span class="eyebrow">CURSOR WORKFLOW</span><h3>Claude Code 同一会话工作流</h3><p>这里直接编辑 cursor (2) 的提示词文件。程序只把工作流入口、小说类型和拆章路径按步骤输入 Claude Code（DeepSeek API），由 AI 会话完成全部拆解和创作。</p></div>
+        </section>
+        <form id="generation-scheme-form" class="scheme-layout">
+          <section class="panel settings-card scheme-version-card">
+            <div class="panel-title"><h3>方案版本</h3><small id="generation-scheme-status">读取中</small></div>
+            <label>当前查看版本<select id="generation-scheme-select"></select></label>
+            <div class="workflow-version-actions">
+              <button id="clone-generation-scheme" class="secondary" type="button">复制为试验版</button>
+              <button id="new-generation-scheme" class="secondary" type="button">新建高质量版</button>
+              <button id="delete-generation-scheme" class="danger-button" type="button">删除当前版本</button>
+              <button id="publish-generation-scheme" class="primary" type="button">发布为员工稳定版</button>
+            </div>
+            <p class="setting-hint">稳定版和历史版只读；复制为试验版后修改。发布仅改变以后选择的默认版本，已有项目继续使用启动前保存的快照。</p>
+          </section>
+          <section class="panel settings-card scheme-main-card">
+            <div class="panel-title"><h3>会话运行设置</h3><small>随版本保存</small></div>
+            <div class="form-grid">
+              <label>版本名称<input name="name" required maxlength="80"></label>
+              <label>版本说明<input name="description" maxlength="500"></label>
+              <label>推理强度<select name="reasoning_effort"><option value="medium">medium</option><option value="high">high</option><option value="xhigh">xhigh</option><option value="max">max</option></select></label>
+              <label>同会话安全上限<input name="max_session_turns" type="number" min="2" max="60" required><small>仅防止异常无限调用，不参与内容判定。</small></label>
+            </div>
+            <label>新项目默认上下文<textarea name="default_context" placeholder="可留空；项目创建后、运行前仍可单独调整。"></textarea></label>
+          </section>
+          <section class="panel settings-card scheme-quality-card">
+            <div class="panel-title"><h3>cursor (2) 工作流文件</h3><small>AI 会话按原路径读取</small></div>
+            <label>选择要编辑的文件<select id="generation-workflow-file"></select></label>
+            <label>文件内容<textarea id="generation-workflow-content" class="workflow-file-editor" spellcheck="false"></textarea></label>
+            <p class="setting-hint">固定保存 cursor (2) 的10个文件路径，可直接修改里面的方法、风格和语义要求。可计数标准由下方合同统一提供给 AI 和程序，避免文字工作流与硬检查两套数字。</p>
+            <details class="rule-core" open>
+              <summary>本版本数值质量合同</summary>
+              <p class="setting-hint">如果工作流里改了字数、场景、台词或比例，请同步修改这里。运行时 AI 和程序都读取这份冻结合同。</p>
+              <div class="quality-rule-groups">
+                <fieldset><legend>分集与结构</legend><div class="quality-rule-grid">
+                  <label>每 6 章最少集数<input name="generation_quality_episodes_per_6_min" type="number" min="1" max="30"></label>
+                  <label>每 6 章普通最多集数<input name="generation_quality_episodes_per_6_max" type="number" min="1" max="30"></label>
+                  <label>高密度例外最多集数<input name="generation_quality_episodes_per_6_high_density_max" type="number" min="1" max="30"></label>
+                  <label>每集最少剧情点<input name="generation_quality_plot_points_min" type="number" min="1" max="10"></label>
+                  <label>每集最多剧情点<input name="generation_quality_plot_points_max" type="number" min="1" max="10"></label>
+                  <label>每集最少场景<input name="generation_quality_scene_min" type="number" min="1" max="10"></label>
+                  <label>每集最多场景<input name="generation_quality_scene_max" type="number" min="1" max="10"></label>
+                </div></fieldset>
+                <fieldset><legend>篇幅与台词</legend><div class="quality-rule-grid">
+                  <label>每集最少汉字<input name="generation_quality_script_han_min" type="number" min="100" max="5000"></label>
+                  <label>每集最多汉字<input name="generation_quality_script_han_max" type="number" min="100" max="5000"></label>
+                  <label>有效台词最少句数<input name="generation_quality_dialogue_lines_min" type="number" min="1" max="30"></label>
+                  <label>台词最多连续句数<input name="generation_quality_dialogue_run_max" type="number" min="1" max="20"></label>
+                  <label>连续▲动作最多处数<input name="generation_quality_adjacent_action_max" type="number" min="0" max="50"></label>
+                  <label>同角色未合并台词最多处数<input name="generation_quality_same_speaker_unmerged_max" type="number" min="0" max="50"></label>
+                  <label>单句台词最多汉字<input name="generation_quality_single_dialogue_han_max" type="number" min="20" max="1000"></label>
+                </div></fieldset>
+                <fieldset><legend>三类正文占比（%）</legend><div class="quality-rule-grid ratio-grid">
+                  <label>对话下限<input name="generation_quality_dialogue_ratio_min" type="number" min="0" max="100"></label>
+                  <label>对话上限<input name="generation_quality_dialogue_ratio_max" type="number" min="0" max="100"></label>
+                  <label>动作下限<input name="generation_quality_action_ratio_min" type="number" min="0" max="100"></label>
+                  <label>动作上限<input name="generation_quality_action_ratio_max" type="number" min="0" max="100"></label>
+                  <label>心理/旁白下限<input name="generation_quality_narration_ratio_min" type="number" min="0" max="100"></label>
+                  <label>心理/旁白上限<input name="generation_quality_narration_ratio_max" type="number" min="0" max="100"></label>
+                </div></fieldset>
+              </div>
+            </details>
+            <div id="generation-scheme-error" class="form-error hidden"></div>
+            <div class="settings-actions"><button id="save-generation-scheme" class="primary" type="submit">保存试验版</button></div>
+          </section>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="project-dialog" class="modal">
+    <form id="project-form">
+      <div class="modal-head"><div><span class="eyebrow">NEW ADAPTATION</span><h3>上传完整小说</h3></div><button type="button" class="close-button" data-close="project-dialog">×</button></div>
+      <p class="modal-lead">上传后先保存完整原文；开始工作流后，由同一个 AI 会话识别章节并跑完整部小说。</p>
+      <label id="drop-zone" class="drop-zone">
+        <input id="novel-file" name="novel" type="file" accept=".txt,.md,.docx" required>
+        <span class="upload-icon">↥</span>
+        <strong id="file-label">把小说拖到这里，或点击选择</strong>
+        <small id="upload-limit-copy">支持 TXT、Markdown、DOCX · 员工单次最大 2 MB</small>
+      </label>
+      <div class="form-grid">
+        <label>小说名称 <input name="title" placeholder="默认使用文件名"></label>
+        <label>小说类型
+          <select name="novel_type">
+            <option>自动识别</option><option>玄幻</option><option>武侠</option><option>都市</option>
+            <option>言情</option><option>古言</option><option>悬疑</option><option>推理</option>
+            <option>科幻</option><option>末世</option><option>重生</option>
+          </select>
+        </label>
+        <label id="project-workflow-field" class="hidden">工作流版本
+          <select id="project-workflow-version" name="workflow_version_id"></select>
+          <small>管理层可选试验版验收；员工固定使用稳定版。</small>
+        </label>
+        <label id="project-one-shot-version-field">生成方案版本
+          <select id="project-one-shot-version" name="one_shot_version_id"></select>
+          <small>员工使用稳定版；管理层可选试验版先验收。</small>
+        </label>
+      </div>
+      <label class="project-context-field">本项目补充上下文（可选）
+        <textarea name="generation_context" placeholder="例如：面向竖屏漫剧；重点保留某条人物线；结局严格沿用原作。上传后、运行前仍可继续修改。"></textarea>
+      </label>
+      <div class="batch-note"><b>当前质量策略</b><span>每 <strong id="batch-size-note">6</strong> 章只是一个处理批次，不等于6集；系统根据原文剧情密度和完整情节弧自然决定集数，不机械一章一集；工作流：<strong id="project-workflow-note">稳定版</strong>。</span></div>
+      <div id="project-error" class="form-error hidden"></div>
+      <div class="modal-actions"><button type="button" class="ghost" data-close="project-dialog">取消</button><button id="upload-button" class="primary" type="submit">上传小说</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="generation-inputs-dialog" class="modal">
+    <form id="generation-inputs-form">
+      <div class="modal-head"><div><span class="eyebrow">AI INPUTS</span><h3>本项目 AI 输入</h3></div><button type="button" class="close-button" data-close="generation-inputs-dialog">×</button></div>
+      <p class="modal-lead">程序不把小说全文拼进提示词，只在同一 Claude Code 会话里先输入“读取工作流”，再输入小说类型和拆章 TXT 路径。下方文件就是 AI 实际读取的工作流。</p>
+      <label>生成方案版本
+        <select name="version_id" id="generation-inputs-version"></select>
+        <small>切换版本会载入该版本的 cursor (2) 文件和上下文；保存后冻结到本项目。</small>
+      </label>
+      <label>选择要编辑的工作流文件<select id="project-workflow-file"></select></label>
+      <label>文件内容<textarea id="project-workflow-content" class="workflow-file-editor" spellcheck="false"></textarea></label>
+      <label>本项目补充上下文
+        <textarea name="context" placeholder="可留空"></textarea>
+      </label>
+      <details class="rule-core">
+        <summary>本项目数值质量合同</summary>
+        <p class="setting-hint">修改工作流中的数字规则时，请同步修改这里。保存后它与工作流一起冻结，AI 创作、计数工具和发布前检查读取同一份值。</p>
+        <div class="quality-rule-groups">
+          <fieldset><legend>分集与结构</legend><div class="quality-rule-grid">
+            <label>每 6 章最少集数<input name="project_quality_episodes_per_6_min" type="number" min="1" max="30"></label>
+            <label>每 6 章普通最多集数<input name="project_quality_episodes_per_6_max" type="number" min="1" max="30"></label>
+            <label>高密度例外最多集数<input name="project_quality_episodes_per_6_high_density_max" type="number" min="1" max="30"></label>
+            <label>每集最少剧情点<input name="project_quality_plot_points_min" type="number" min="1" max="10"></label>
+            <label>每集最多剧情点<input name="project_quality_plot_points_max" type="number" min="1" max="10"></label>
+            <label>每集最少场景<input name="project_quality_scene_min" type="number" min="1" max="10"></label>
+            <label>每集最多场景<input name="project_quality_scene_max" type="number" min="1" max="10"></label>
+          </div></fieldset>
+          <fieldset><legend>篇幅与台词</legend><div class="quality-rule-grid">
+            <label>每集最少汉字<input name="project_quality_script_han_min" type="number" min="100" max="5000"></label>
+            <label>每集最多汉字<input name="project_quality_script_han_max" type="number" min="100" max="5000"></label>
+            <label>有效台词最少句数<input name="project_quality_dialogue_lines_min" type="number" min="1" max="30"></label>
+            <label>台词最多连续句数<input name="project_quality_dialogue_run_max" type="number" min="1" max="20"></label>
+            <label>连续▲动作最多处数<input name="project_quality_adjacent_action_max" type="number" min="0" max="50"></label>
+            <label>同角色未合并台词最多处数<input name="project_quality_same_speaker_unmerged_max" type="number" min="0" max="50"></label>
+            <label>单句台词最多汉字<input name="project_quality_single_dialogue_han_max" type="number" min="20" max="1000"></label>
+          </div></fieldset>
+          <fieldset><legend>三类正文占比（%）</legend><div class="quality-rule-grid ratio-grid">
+            <label>对话下限<input name="project_quality_dialogue_ratio_min" type="number" min="0" max="100"></label>
+            <label>对话上限<input name="project_quality_dialogue_ratio_max" type="number" min="0" max="100"></label>
+            <label>动作下限<input name="project_quality_action_ratio_min" type="number" min="0" max="100"></label>
+            <label>动作上限<input name="project_quality_action_ratio_max" type="number" min="0" max="100"></label>
+            <label>心理/旁白下限<input name="project_quality_narration_ratio_min" type="number" min="0" max="100"></label>
+            <label>心理/旁白上限<input name="project_quality_narration_ratio_max" type="number" min="0" max="100"></label>
+          </div></fieldset>
+        </div>
+      </details>
+      <p class="setting-hint">固定交付协议（Episode-NNN.md、标题/场景头、▲动作、【卡黑】）不是 AI 工作流规则，不在此按钮修改；它与系统解析、预览和导出格式绑定。</p>
+      <div id="generation-inputs-error" class="form-error hidden"></div>
+      <div class="modal-actions"><button type="button" class="ghost" data-close="generation-inputs-dialog">取消</button><button id="save-generation-inputs" class="primary" type="submit">保存 AI 输入</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="user-dialog" class="modal small-modal">
+    <form id="user-form">
+      <div class="modal-head"><div><span class="eyebrow">NEW ACCOUNT</span><h3>创建账号</h3></div><button type="button" class="close-button" data-close="user-dialog">×</button></div>
+      <div class="form-grid">
+        <label>登录账号<input name="username" required placeholder="例如 zhangsan"></label>
+        <label>员工姓名<input name="display_name" required placeholder="例如 张三"></label>
+        <label>初始密码<input name="password" type="password" minlength="8" required placeholder="至少 8 位"></label>
+        <label id="new-user-role-field">角色
+          <select name="role">
+            <option value="user">员工</option>
+            <option value="manager">管理层</option>
+            <option value="admin">管理员</option>
+          </select>
+        </label>
+        <label>本月任务上限<input name="max_monthly_runs" type="number" min="1" value="20"></label>
+        <label>项目总数上限<input name="max_projects" type="number" min="1" value="10"></label>
+        <label id="new-user-active-job-limit-field">同时运行/排队任务上限<input name="max_active_jobs" type="number" min="1" value="2"><small>管理员可按账号设置；默认 2 个。</small></label>
+        <label>单项目章节上限<input name="max_chapters_per_project" type="number" min="6" value="500"></label>
+      </div>
+      <div id="user-error" class="form-error hidden"></div>
+      <div class="modal-actions"><button type="button" class="ghost" data-close="user-dialog">取消</button><button class="primary" type="submit">创建账号</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="user-edit-dialog" class="modal small-modal">
+    <form id="user-edit-form">
+      <div class="modal-head"><div><span class="eyebrow">ACCOUNT CONTROL</span><h3 id="user-edit-title">编辑员工账号</h3></div><button type="button" class="close-button" data-close="user-edit-dialog">×</button></div>
+      <input name="user_id" type="hidden">
+      <div class="form-grid">
+        <label>员工姓名<input name="display_name" required></label>
+        <label>角色
+          <select name="role">
+            <option value="user">员工</option>
+            <option value="manager">管理层</option>
+            <option value="admin">管理员</option>
+          </select>
+        </label>
+        <label>本月任务上限<input name="max_monthly_runs" type="number" min="1"></label>
+        <label>项目总数上限<input name="max_projects" type="number" min="1"></label>
+        <label id="user-edit-active-job-limit-field">同时运行/排队任务上限<input name="max_active_jobs" type="number" min="1"><small>只统计运行中和排队中的任务；调低不会中断已有任务。</small></label>
+        <label>单项目章节上限<input name="max_chapters_per_project" type="number" min="1"></label>
+        <label>新密码<input name="password" type="password" minlength="8" placeholder="留空表示不修改"></label>
+      </div>
+      <label class="switch-line"><input name="is_active" type="checkbox"><span>启用账号</span></label>
+      <div id="user-edit-error" class="form-error hidden"></div>
+      <div class="modal-actions"><button type="button" class="ghost" data-close="user-edit-dialog">取消</button><button class="primary" type="submit">保存修改</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="password-dialog" class="modal small-modal">
+    <form id="password-form">
+      <div class="modal-head"><div><span class="eyebrow">ACCOUNT SECURITY</span><h3>修改密码</h3></div><button type="button" class="close-button" data-close="password-dialog">×</button></div>
+      <p class="modal-lead">修改后当前设备会保持登录，其他设备上的登录会话将自动失效。</p>
+      <div class="password-fields">
+        <label>当前密码<input name="current_password" type="password" autocomplete="current-password" required placeholder="请输入当前密码"></label>
+        <label>新密码<input name="new_password" type="password" autocomplete="new-password" minlength="8" required placeholder="至少 8 位"></label>
+        <label>确认新密码<input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required placeholder="再次输入新密码"></label>
+      </div>
+      <div id="password-error" class="form-error hidden"></div>
+      <div class="modal-actions"><button type="button" class="ghost" data-close="password-dialog">取消</button><button class="primary" type="submit">确认修改</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="logout-dialog" class="modal confirm-modal">
+    <form id="logout-confirm-form">
+      <div class="modal-head"><div><span class="eyebrow">SIGN OUT</span><h3>确认退出登录？</h3></div><button type="button" class="close-button" data-close="logout-dialog">×</button></div>
+      <p class="modal-lead">退出后需要重新输入账号和密码才能进入工作台。正在服务器运行的任务不会因此停止。</p>
+      <div id="logout-error" class="form-error hidden"></div>
+      <div class="modal-actions"><button type="button" class="ghost" data-close="logout-dialog">取消</button><button class="danger-button" type="submit">确认退出</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="reader-dialog" class="reader-modal">
+    <div class="reader-head"><div><span id="reader-kicker" class="eyebrow">SCRIPT PREVIEW</span><h3 id="reader-title">剧本预览</h3></div><button type="button" class="close-button" data-close="reader-dialog">×</button></div>
+    <pre id="reader-content"></pre>
+  </dialog>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js?v=20261018-edit-input"></script>
+</body>
+</html>
