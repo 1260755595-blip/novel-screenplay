@@ -1,0 +1,16 @@
+name: List HF Spaces
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo "=== All Spaces ==="
+          curl -s -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/spaces?author=ukjg&limit=50" | python3 -m json.tool
