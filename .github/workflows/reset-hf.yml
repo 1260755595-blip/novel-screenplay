@@ -1,0 +1,24 @@
+name: Factory Reset HF Space
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Factory Reset Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo "=== Factory Reset ==="
+          curl -s -X POST \
+            -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/spaces/ukjg/novel-screenplay/factory-reset"
+          echo ""
+          sleep 8
+          echo "=== Restart ==="
+          curl -s -X POST \
+            -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/spaces/ukjg/novel-screenplay/restart"
+          echo ""
