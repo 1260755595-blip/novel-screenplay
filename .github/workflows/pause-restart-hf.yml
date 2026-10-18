@@ -1,0 +1,25 @@
+name: Pause and Restart HF Space
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pause-restart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pause then Restart Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo "=== Pausing Space ==="
+          curl -s -X POST \
+            -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/spaces/ukjg/novel-screenplay/pause"
+          echo ""
+          sleep 5
+          echo "=== Restarting Space ==="
+          curl -s -X POST \
+            -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/spaces/ukjg/novel-screenplay/restart"
+          echo ""
+          echo "=== Done ==="
