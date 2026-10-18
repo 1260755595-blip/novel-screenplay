@@ -1,0 +1,38 @@
+name: Deploy to Hugging Face Space
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 配置 git
+          git config --global user.email "deploy@github-actions.com"
+          git config --global user.name "GitHub Actions"
+          
+          # 克隆 Hugging Face Space
+          git clone https://ukjg:${HF_TOKEN}@huggingface.co/spaces/ukjg/novel-screenplay /tmp/hf-space
+          
+          # 同步文件（排除 .git 和 GitHub 相关文件）
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='render.yaml' \
+            --exclude='DEPLOY.md' \
+            ./ /tmp/hf-space/
+          
+          # 提交并推送
+          cd /tmp/hf-space
+          git add -A
+          git commit -m "Deploy from GitHub" || echo "No changes to commit"
+          git push origin main
