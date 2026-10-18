@@ -1,0 +1,19 @@
+name: Restart Hugging Face Space
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restart Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo "Restarting Hugging Face Space..."
+          curl -X POST \
+            -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/spaces/ukjg/novel-screenplay/restart"
+          echo ""
+          echo "Done."
