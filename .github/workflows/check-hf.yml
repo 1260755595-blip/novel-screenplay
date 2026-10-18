@@ -1,0 +1,21 @@
+name: Check HF Account Info
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Account Info
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo "=== Whoami ==="
+          curl -s -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/whoami-v2"
+          echo ""
+          echo "=== Space Details ==="
+          curl -s -H "Authorization: Bearer ${HF_TOKEN}" \
+            "https://huggingface.co/api/spaces/ukjg/novel-screenplay?full=true"
+          echo ""
